@@ -24,6 +24,7 @@ public class HelloWorld {
         rnr.addListener( new PrintBProgramRunnerListener() );
         rnr.addListener( new RobotBProgramRunnerListener() );
 
+
         // go!
         rnr.run();
     }
