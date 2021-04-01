@@ -21,8 +21,8 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     private Channel channel;
     private final String QUEUE_NAME = "Cafe";
 
-    RobotBProgramRunnerListener() {
-//        openQueue();
+    RobotBProgramRunnerListener() throws IOException, TimeoutException {
+        openQueue();
     }
 
     @Override
@@ -54,11 +54,11 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 jsonObject.addProperty("Command", "Subscribe");
                 jsonObject.add("Data", jsonElement);
 
-//                try {
-//                    Send(jsonString);
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
+                try {
+                    Send(jsonString);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 UpdatePortsMap(jsonString);
                 break;
 
@@ -92,7 +92,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     private void openQueue() throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("10.0.0.3");
+        factory.setHost("192.168.1.31");
 
         factory.setUsername("pi");
         factory.setPassword("pi");
