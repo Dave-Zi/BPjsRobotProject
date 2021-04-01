@@ -21,14 +21,17 @@
 //     }
 // });
 
-var allEventsButScanEventSet = bp.EventSet("", function (e) {
-    return !e.name.equals("scan_data");
-});
+var updateEventSet = bp.EventSet("Get Update", function (e) {
+    return (e.data == null) ? false : e.data.boards.Robot;
+})
 
-var allEventsButBuildEventSet = bp.EventSet("", function (e) {
+var allEventsButBuildEventSet = bp.EventSet("Block all for build", function (e) {
     return !e.name.equals("Build");
 });
 
+var dataEventSet = bp.EventSet("", function (e) {
+    return e.name.equals("GetSensorsData");
+});
 
 //
 // bp.registerBThread("move forward", function () {
@@ -41,7 +44,6 @@ var allEventsButBuildEventSet = bp.EventSet("", function (e) {
 
 bp.registerBThread("Avoid walls ahead", function () {
     bp.sync({request: bp.Event("Subscribe", {"Ev3": {1: ["2"], 2: ["3"]}, "GrovePi": ["D3"]})});
-    bp.sync({request: bp.Event("Subscribe", {"Ev3": {1: ["2", "3"], 2: ["4"]}, "GrovePi": ["D3", "D4"]})})
     // while(true) {
     //     var e = bp.sync({ waitFor: scanDataEventSet });
     //     var ranges = e.data.ranges;
@@ -50,6 +52,20 @@ bp.registerBThread("Avoid walls ahead", function () {
     //         bp.sync({block: moveEventSet, waitFor: updateVelocityEventSet})
     //     }
     // }
+});
+
+bp.registerBThread("Get Sensors Data", function () {
+    // while (true) {
+    //     bp.sync({request: bp.Event("Update")});
+    // }
+    bp.sync({request: bp.Event("Update")});
+});
+
+bp.registerBThread("Do Something with Data", function () {
+    var e = bp.sync({waitFor: dataEventSet});
+    var data = JSON.parse(e.data);
+    var s  = data.EV3._0._1;
+    bp.sync({request: bp.Event("Test", {"t": s})})
 });
 
 bp.registerBThread("Initiation", function () {

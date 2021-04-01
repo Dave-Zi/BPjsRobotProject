@@ -44,38 +44,74 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     @Override
     public void eventSelected(BProgram bp, BEvent theEvent) {
+        String jsonString;
+        JsonElement jsonElement;
+        JsonObject jsonObject;
         switch (theEvent.name){
             case "Subscribe":
                 System.out.println("Subscribing...");
-                String jsonString = ParseObjectToJsonString(theEvent.maybeData);
-                JsonElement jsonElement= new JsonParser().parse(jsonString);
+                jsonString = ParseObjectToJsonString(theEvent.maybeData);
+                jsonElement= new JsonParser().parse(jsonString);
 
-                JsonObject jsonObject = new JsonObject();
+                jsonObject = new JsonObject();
                 jsonObject.addProperty("Command", "Subscribe");
                 jsonObject.add("Data", jsonElement);
 
-//                try {
-//                    Send(jsonString);
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-                UpdatePortsMap(jsonString);
+                try {
+                    Send(jsonObject.toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                AddToBoardsMap(jsonString);
                 break;
 
             case "Unsubscribe":
-                // TODO: Unsubscribe to sensors on robot
+                System.out.println("Unsubscribing...");
+                jsonString = ParseObjectToJsonString(theEvent.maybeData);
+                jsonElement = new JsonParser().parse(jsonString);
+
+                jsonObject = new JsonObject();
+                jsonObject.addProperty("Command", "Unsubscribe");
+                jsonObject.add("Data", jsonElement);
+
+                try {
+                    Send(jsonObject.toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                RemoveFromBoardsMap(jsonString);
                 break;
 
             case "Build":
-                System.out.println("Building");
+                System.out.println("Building...");
+                jsonString = ParseObjectToJsonString(theEvent.maybeData);
+                jsonElement = new JsonParser().parse(jsonString);
+
+                jsonObject = new JsonObject();
+                jsonObject.addProperty("Command", "Build");
+                jsonObject.add("Data", jsonElement);
+
+                try {
+                    Send(jsonObject.toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
-            // TODO: Build the robot object
 
             case "Update":
-                System.out.println("Scan Data");
+                injectEvent(bp, "{\"EV3\": {\"_0\": {\"_1\": 20}}}");
+                break;
+            // TODO: Check Queue for data from Robot
+
+            case "Test":
+                System.out.println("!!!");
                 break;
             // TODO: Check Queue for data from Robot
         }
+    }
+    private void injectEvent(BProgram bp, String message){
+        bp.enqueueExternalEvent(new BEvent("GetSensorsData", message));
     }
 
     @Override
@@ -102,38 +138,17 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     }
 
     private void Send(String message) throws IOException {
-        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
-        System.out.println(" [x] Sent '" + message + "'");
+//        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+//        System.out.println(" [x] Sent '" + message + "'");
     }
 
     private String ParseObjectToJsonString(Object data){
         return new Gson().toJson(data, Map.class);
     }
 
-    private void UpdatePortsMap(String json){
-        HashMap<String, HashMap<Integer, Set<String>>> data = new HashMap<>();
-        Gson gson = new Gson();
-        Map element = gson.fromJson(json, Map.class);
+    private void AddToBoardsMap(String json){
+        HashMap<String, HashMap<Integer, Set<String>>> data = JsonToBoardsMap(json);
 
-        for (Object key: element.keySet()){
-            data.put((String) key, new HashMap<>());
-            Object value = element.get(key);
-            if (value instanceof  ArrayList){
-                @SuppressWarnings("unchecked")
-                Set<String> portList = new HashSet<>((ArrayList<String>) value);
-                data.get(key).put(1, portList);
-
-            } else if (value instanceof LinkedTreeMap){
-                @SuppressWarnings("unchecked")
-                Map<String, List<String>> valueMapped = (Map<String, List<String>>) value;
-                for (Map.Entry<String, List<String>> intAndList : valueMapped.entrySet()) {
-
-                    Set<String> portList = new HashSet<>(intAndList.getValue());
-                    data.get(key).put(Integer.valueOf(intAndList.getKey()), portList);
-                }
-            }
-
-        }
         for (Map.Entry<String, HashMap<Integer, Set<String>>> entry : data.entrySet()) {
             if (portsMap.keySet().contains(entry.getKey())){
                 for (Map.Entry<Integer, Set<String>> entryInBoard : entry.getValue().entrySet()) {
@@ -148,6 +163,47 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 portsMap.put(entry.getKey(), entry.getValue());
             }
         }
+    }
+
+    private void RemoveFromBoardsMap(String json){
+        HashMap<String, HashMap<Integer, Set<String>>> data = JsonToBoardsMap(json);
+
+        for (Map.Entry<String, HashMap<Integer, Set<String>>> entry : data.entrySet()) {
+            if (portsMap.keySet().contains(entry.getKey())){
+                for (Map.Entry<Integer, Set<String>> entryInBoard : entry.getValue().entrySet()) {
+                    HashMap<Integer, Set<String>> boardsMap = portsMap.get(entry.getKey());
+                    if (boardsMap.keySet().contains(entryInBoard.getKey())){
+                        boardsMap.get(entryInBoard.getKey()).removeAll(entryInBoard.getValue());
+                    }
+                }
+            }
+        }
+    }
+
+    private HashMap<String, HashMap<Integer, Set<String>>> JsonToBoardsMap(String json) {
+        HashMap<String, HashMap<Integer, Set<String>>> data = new HashMap<>();
+        Gson gson = new Gson();
+        Map element = gson.fromJson(json, Map.class);
+
+        for (Object key: element.keySet()){
+            data.put((String) key, new HashMap<>());
+            Object value = element.get(key);
+            if (value instanceof ArrayList){
+                @SuppressWarnings("unchecked")
+                Set<String> portList = new HashSet<>((ArrayList<String>) value);
+                data.get(key).put(1, portList);
+
+            } else if (value instanceof LinkedTreeMap){
+                @SuppressWarnings("unchecked")
+                Map<String, List<String>> valueMapped = (Map<String, List<String>>) value;
+                for (Map.Entry<String, List<String>> intAndList : valueMapped.entrySet()) {
+
+                    Set<String> portList = new HashSet<>(intAndList.getValue());
+                    data.get(key).put(Integer.valueOf(intAndList.getKey()), portList);
+                }
+            }
+        }
+        return data;
     }
 //    {"Ev3":{"1":["2"],"2":["3"]},"GrovePi":["D3"]}
 }
