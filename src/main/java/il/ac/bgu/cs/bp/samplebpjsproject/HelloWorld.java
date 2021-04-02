@@ -4,6 +4,7 @@ import il.ac.bgu.cs.bp.bpjs.execution.BProgramRunner;
 import il.ac.bgu.cs.bp.bpjs.execution.listeners.PrintBProgramRunnerListener;
 import il.ac.bgu.cs.bp.bpjs.model.BProgram;
 import il.ac.bgu.cs.bp.bpjs.model.ResourceBProgram;
+import il.ac.bgu.cs.bp.bpjs.model.eventselection.PrioritizedBSyncEventSelectionStrategy;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -17,7 +18,8 @@ public class HelloWorld {
     public static void main(String[] args) throws IOException, TimeoutException {
         // This will load the program file  <Project>/src/main/resources/HelloBPjsWorld.js
         final BProgram bprog = new ResourceBProgram("HelloBPjsWorld.js");
-        
+        bprog.setWaitForExternalEvents(true);
+
         BProgramRunner rnr = new BProgramRunner(bprog);
 
         // Print program events to the console
