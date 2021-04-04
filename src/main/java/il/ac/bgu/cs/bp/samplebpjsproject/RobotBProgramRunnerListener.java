@@ -85,29 +85,29 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
             case "Build":
                 System.out.println("Building...");
-                jsonString = ParseObjectToJsonString(theEvent.maybeData);
-                jsonElement = new JsonParser().parse(jsonString);
+                jsonString = ParseObjectToJsonString(theEvent.maybeData); // Get JSON string
+                jsonElement = new JsonParser().parse(jsonString); // Convert JSON string to element for wrapping the data
 
-                jsonObject = new JsonObject();
-                jsonObject.addProperty("Command", "Build");
-                jsonObject.add("Data", jsonElement);
+                jsonObject = new JsonObject(); // Create new JSON
+                jsonObject.addProperty("Command", "Build"); // Add 'Command' key and value
+                jsonObject.add("Data", jsonElement); // Add 'Data' as key and Data from 'Build' event as value.
 
                 try {
-                    Send(jsonObject.toString());
+                    Send(jsonObject.toString()); // Send new JSON string over to Robot side.
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 break;
 
             case "Update":
-                injectEvent(bp, "{\"EV3\": {\"_0\": {\"_1\": 20}}}");
+                // TODO: Collect sensor data that arrived from Robot and send it as a JSON string to injectEvent
+                String jsonDataString = "{\"Ev3\": {\"_0\": {\"_2\": 20}}}"; // Example
+                injectEvent(bp, jsonDataString);
                 break;
-            // TODO: Check Queue for data from Robot
 
             case "Test":
                 System.out.println("!!!");
                 break;
-            // TODO: Check Queue for data from Robot
         }
     }
     private void injectEvent(BProgram bp, String message){
