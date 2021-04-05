@@ -1,6 +1,9 @@
 package il.ac.bgu.cs.bp.samplebpjsproject;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.internal.LinkedTreeMap;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -101,11 +104,32 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
             case "Update":
                 // TODO: Collect sensor data that arrived from Robot and send it as a JSON string to injectEvent
-                String jsonDataString = "{\"Ev3\": {\"_0\": {\"_2\": 20}}}"; // Example
+                String jsonDataString = "{\"EV3\": {\"_0\": {\"_2\": 20}}}"; // Example
+
                 injectEvent(bp, jsonDataString);
                 break;
 
+            case "Drive":
+                System.out.println("Driving...");
+                jsonString = ParseObjectToJsonString(theEvent.maybeData);
+                jsonElement = new JsonParser().parse(jsonString);
+
+                jsonObject = new JsonObject();
+                jsonObject.addProperty("Command", "Drive");
+                jsonObject.add("Data", jsonElement);
+                try {
+                    Send(jsonObject.toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+
             case "Test":
+//                try {
+//                    Send("Red");
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
                 System.out.println("!!!");
                 break;
         }
