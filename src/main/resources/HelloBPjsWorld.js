@@ -86,7 +86,8 @@ bp.registerBThread("Align to Left Wall", function(){
         } else {
             speedOffset = 0
         }
-        bp.sync({request: bp.Event("Drive", {"Ev3": {"A": 30 - speedOffset, "D": 30 + speedOffset}})});
+        bp.sync({request: bp.Event("Update")});
+        bp.sync({request: bp.Event("Drive", {"EV3": {"B": 30 - speedOffset, "C": 30 + speedOffset}})});
     }
 });
 

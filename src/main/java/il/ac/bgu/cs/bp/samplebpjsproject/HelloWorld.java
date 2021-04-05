@@ -15,7 +15,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class HelloWorld {
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, TimeoutException {
         // This will load the program file  <Project>/src/main/resources/HelloBPjsWorld.js
         final BProgram bprog = new ResourceBProgram("HelloBPjsWorld.js");
         bprog.setWaitForExternalEvents(true);
@@ -23,7 +23,7 @@ public class HelloWorld {
         BProgramRunner rnr = new BProgramRunner(bprog);
 
         // Print program events to the console
-//        rnr.addListener( new PrintBProgramRunnerListener() );
+        rnr.addListener( new PrintBProgramRunnerListener() );
         rnr.addListener( new RobotBProgramRunnerListener() );
 
 
