@@ -23,7 +23,7 @@
 
 var updateEventSet = bp.EventSet("Get Update", function (e) {
     return (e.data == null) ? false : e.data.boards.Robot;
-})
+});
 
 var allEventsButBuildEventSet = bp.EventSet("Block all for build", function (e) {
     return !e.name.equals("Build");
@@ -64,9 +64,39 @@ bp.registerBThread("Get Sensors Data", function () {
 bp.registerBThread("Do Something with Data", function () {
     var e = bp.sync({waitFor: dataEventSet});
     var data = JSON.parse(e.data);
-    var s  = data.EV3._0._1;
+    var s  = data.Ev3._0._2;
     bp.sync({request: bp.Event("Test", {"t": s})})
 });
+
+bp.registerBThread("Do Something else with Data", function () {
+    var e = bp.sync({waitFor: dataEventSet});
+    var data = JSON.parse(e.data);
+    var s  = data.Ev3._0._2;
+    bp.sync({request: bp.Event("Test", {"t": s+5})})
+});
+
+// bp.registerBThread("Align to Left Wall", function(){
+//     bp.sync({request: bp.Event("Subscribe", {"Ev3": ["2"]})});
+//     var speedOffset = 0;
+//
+//     while (true) {
+//         var e = bp.sync({waitFor: dataEventSet});
+//         var data = JSON.parse(e.data);
+//         var myDistance = data.EV3._0._2; // get data from port 2 on Ev3
+//
+//         if (myDistance > 20) { // Offset is incrementally changed to slowly fix direction until wall is found and aligned with.
+//             speedOffset = Math.max(speedOffset, 0); // speedOffset is reset to 0 if it was negative
+//             speedOffset = Math.min(5, speedOffset + 1); // Incrementally add 1 to the speed offset to max difference of 10
+//         } else if (myDistance < 20) {
+//             speedOffset = Math.min(speedOffset, 0); // speedOffset is reset to 0 if it was positive
+//             speedOffset = Math.max(-5, speedOffset - 1); // Incrementally subtract 1 to the speed offset to max difference of 10
+//         } else {
+//             speedOffset = 0
+//         }
+//         bp.sync({request: bp.Event("Drive", {"Ev3": {"A": 30 - speedOffset, "D": 30 + speedOffset}})});
+//     }
+// });
+
 
 bp.registerBThread("Initiation", function () {
     bp.sync({block: allEventsButBuildEventSet, request: bp.Event("Build",
