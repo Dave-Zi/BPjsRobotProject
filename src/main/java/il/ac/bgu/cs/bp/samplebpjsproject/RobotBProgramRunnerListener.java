@@ -1,6 +1,9 @@
 package il.ac.bgu.cs.bp.samplebpjsproject;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.internal.LinkedTreeMap;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -21,8 +24,8 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     private Channel channel;
     private final String QUEUE_NAME = "Cafe";
 
-    RobotBProgramRunnerListener() {
-//        openQueue();
+    RobotBProgramRunnerListener() throws IOException, TimeoutException {
+        openQueue();
     }
 
     @Override
@@ -85,13 +88,35 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
             case "Build":
                 System.out.println("Building...");
+                jsonString = ParseObjectToJsonString(theEvent.maybeData); // Get JSON string
+                jsonElement = new JsonParser().parse(jsonString); // Convert JSON string to element for wrapping the data
+
+                jsonObject = new JsonObject(); // Create new JSON
+                jsonObject.addProperty("Command", "Build"); // Add 'Command' key and value
+                jsonObject.add("Data", jsonElement); // Add 'Data' as key and Data from 'Build' event as value.
+
+                try {
+                    Send(jsonObject.toString()); // Send new JSON string over to Robot side.
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+
+            case "Update":
+                // TODO: Collect sensor data that arrived from Robot and send it as a JSON string to injectEvent
+                String jsonDataString = "{\"EV3\": {\"_0\": {\"_2\": 20}}}"; // Example
+
+                injectEvent(bp, jsonDataString);
+                break;
+
+            case "Drive":
+                System.out.println("Driving...");
                 jsonString = ParseObjectToJsonString(theEvent.maybeData);
                 jsonElement = new JsonParser().parse(jsonString);
 
                 jsonObject = new JsonObject();
-                jsonObject.addProperty("Command", "Build");
+                jsonObject.addProperty("Command", "Drive");
                 jsonObject.add("Data", jsonElement);
-
                 try {
                     Send(jsonObject.toString());
                 } catch (IOException e) {
@@ -99,15 +124,14 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 }
                 break;
 
-            case "Update":
-                injectEvent(bp, "{\"EV3\": {\"_0\": {\"_1\": 20}}}");
-                break;
-            // TODO: Check Queue for data from Robot
-
             case "Test":
+//                try {
+//                    Send("Red");
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
                 System.out.println("!!!");
                 break;
-            // TODO: Check Queue for data from Robot
         }
     }
     private void injectEvent(BProgram bp, String message){
@@ -128,7 +152,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     private void openQueue() throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("10.0.0.3");
+        factory.setHost("192.168.1.31");
 
         factory.setUsername("pi");
         factory.setPassword("pi");
@@ -138,8 +162,8 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     }
 
     private void Send(String message) throws IOException {
-//        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
-//        System.out.println(" [x] Sent '" + message + "'");
+        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+        System.out.println(" [x] Sent '" + message + "'");
     }
 
     private String ParseObjectToJsonString(Object data){
