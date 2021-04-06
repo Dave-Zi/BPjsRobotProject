@@ -17,15 +17,16 @@ import il.ac.bgu.cs.bp.bpjs.model.SafetyViolationTag;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
-    private HashMap<String, HashMap<Integer, Set<String>>> portsMap = new HashMap<>();
+    private HashMap<String, HashMap<Integer, Set<Map.Entry<String, Double>>>> portsMap = new HashMap<>();
     private Channel channel;
     private final String QUEUE_NAME = "Cafe";
 
     RobotBProgramRunnerListener() throws IOException, TimeoutException {
-        openQueue();
+//        openQueue();
     }
 
     @Override
@@ -162,8 +163,8 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     }
 
     private void Send(String message) throws IOException {
-        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
-        System.out.println(" [x] Sent '" + message + "'");
+//        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+//        System.out.println(" [x] Sent '" + message + "'");
     }
 
     private String ParseObjectToJsonString(Object data){
@@ -171,31 +172,32 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     }
 
     private void AddToBoardsMap(String json){
-        HashMap<String, HashMap<Integer, Set<String>>> data = JsonToBoardsMap(json);
+        HashMap<String, HashMap<Integer, Set<Map.Entry<String, Double>>>> boards = JsonToBoardsMap(json); // Build Map of Robot Ports in json
 
-        for (Map.Entry<String, HashMap<Integer, Set<String>>> entry : data.entrySet()) {
-            if (portsMap.keySet().contains(entry.getKey())){
-                for (Map.Entry<Integer, Set<String>> entryInBoard : entry.getValue().entrySet()) {
-                    HashMap<Integer, Set<String>> boardsMap = portsMap.get(entry.getKey());
-                    if (boardsMap.keySet().contains(entryInBoard.getKey())){
-                        boardsMap.get(entryInBoard.getKey()).addAll(entryInBoard.getValue());
+        for (Map.Entry<String, HashMap<Integer, Set<Map.Entry<String, Double>>>> board : boards.entrySet()) { // Iterate over board types
+            if (portsMap.keySet().contains(board.getKey())){ // If board type already exist in portsMap
+                for (Map.Entry<Integer, Set<Map.Entry<String, Double>>> entryInBoard : board.getValue().entrySet()) { // Iterate over board map
+                    HashMap<Integer, Set<Map.Entry<String, Double>>> boardsMap = portsMap.get(board.getKey());
+                    if (boardsMap.keySet().contains(entryInBoard.getKey())){ // If  existing boards map already contain this board
+                        boardsMap.get(entryInBoard.getKey()).addAll(entryInBoard.getValue()); // Add boards value to pre existing port list
                     } else {
-                        boardsMap.put(entryInBoard.getKey(), entryInBoard.getValue());
+                        boardsMap.put(entryInBoard.getKey(), entryInBoard.getValue()); // Put new board into map
                     }
                 }
-            } else {
-                portsMap.put(entry.getKey(), entry.getValue());
+            } else { // If board type doesn't exist in portMap.
+
+                portsMap.put(board.getKey(), board.getValue()); // Add board type with all its data to map
             }
         }
     }
 
     private void RemoveFromBoardsMap(String json){
-        HashMap<String, HashMap<Integer, Set<String>>> data = JsonToBoardsMap(json);
+        HashMap<String, HashMap<Integer, Set<Map.Entry<String, Double>>>> data = JsonToBoardsMap(json);
 
-        for (Map.Entry<String, HashMap<Integer, Set<String>>> entry : data.entrySet()) {
+        for (Map.Entry<String, HashMap<Integer, Set<Map.Entry<String, Double>>>> entry : data.entrySet()) {
             if (portsMap.keySet().contains(entry.getKey())){
-                for (Map.Entry<Integer, Set<String>> entryInBoard : entry.getValue().entrySet()) {
-                    HashMap<Integer, Set<String>> boardsMap = portsMap.get(entry.getKey());
+                for (Map.Entry<Integer, Set<Map.Entry<String, Double>>> entryInBoard : entry.getValue().entrySet()) {
+                    HashMap<Integer, Set<Map.Entry<String, Double>>> boardsMap = portsMap.get(entry.getKey());
                     if (boardsMap.keySet().contains(entryInBoard.getKey())){
                         boardsMap.get(entryInBoard.getKey()).removeAll(entryInBoard.getValue());
                     }
@@ -204,26 +206,40 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         }
     }
 
-    private HashMap<String, HashMap<Integer, Set<String>>> JsonToBoardsMap(String json) {
-        HashMap<String, HashMap<Integer, Set<String>>> data = new HashMap<>();
+    private HashMap<String, HashMap<Integer, Set<Map.Entry<String, Double>>>> JsonToBoardsMap(String json) {
+        HashMap<String, HashMap<Integer, Set<Map.Entry<String, Double>>>> data = new HashMap<>();
         Gson gson = new Gson();
-        Map element = gson.fromJson(json, Map.class);
+        Map element = gson.fromJson(json, Map.class); // json String to Map
 
-        for (Object key: element.keySet()){
-            data.put((String) key, new HashMap<>());
+        for (Object key: element.keySet()){ // Iterate over board types
+            data.put((String) key, new HashMap<>()); // Add board name to map
             Object value = element.get(key);
-            if (value instanceof ArrayList){
-                @SuppressWarnings("unchecked")
-                Set<String> portList = new HashSet<>((ArrayList<String>) value);
-                data.get(key).put(1, portList);
 
-            } else if (value instanceof LinkedTreeMap){
+            // Check if board contains map of boards or list of ports
+            // board in json might have mapping of a number of boards of its type
+            // or list of ports that will be treated as if there's only one board of this type
+            if (value instanceof ArrayList){ // If board has list of ports.
+
                 @SuppressWarnings("unchecked")
-                Map<String, List<String>> valueMapped = (Map<String, List<String>>) value;
+                ArrayList<String> ports = (ArrayList<String>) value;
+                Set<Map.Entry<String, Double>> portSet = ports.stream().map(port -> new AbstractMap.SimpleEntry<String, Double>(port, null)).collect(Collectors.toSet());
+//                Set<Pair<String, Double>> portList = new HashSet<>();
+//                for (String port :
+//                        (ArrayList<String>)value) {
+//
+//                }
+//                @SuppressWarnings("unchecked")
+//                Set<String> portList = new HashSet<>((ArrayList<String>) value);
+                data.get(key).put(1, portSet); // Index of the first board of this type is 1
+
+            } else if (value instanceof LinkedTreeMap){ // If board has map boards of this type
+                @SuppressWarnings("unchecked")
+                Map<String, List<String>> valueMapped = (Map<String, List<String>>) value; // Map of boards to ports list
                 for (Map.Entry<String, List<String>> intAndList : valueMapped.entrySet()) {
 
                     Set<String> portList = new HashSet<>(intAndList.getValue());
-                    data.get(key).put(Integer.valueOf(intAndList.getKey()), portList);
+                    Set<Map.Entry<String, Double>> portSet = portList.stream().map(port -> new AbstractMap.SimpleEntry<String, Double>(port, null)).collect(Collectors.toSet());
+                    data.get(key).put(Integer.valueOf(intAndList.getKey()), portSet);
                 }
             }
         }
