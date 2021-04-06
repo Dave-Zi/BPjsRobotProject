@@ -51,12 +51,12 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 message = eventDataToJson(theEvent, "Subscribe");
 
                 try {
-                    Send(message);
+                    send(message);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                jsonString = ParseObjectToJsonString(theEvent.maybeData);
+                jsonString = parseObjectToJsonString(theEvent.maybeData);
                 robotData.addToBoardsMap(jsonString);
                 break;
 
@@ -65,12 +65,12 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 message = eventDataToJson(theEvent, "Unsubscribe");
 
                 try {
-                    Send(message);
+                    send(message);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                jsonString = ParseObjectToJsonString(theEvent.maybeData);
+                jsonString = parseObjectToJsonString(theEvent.maybeData);
                 robotData.removeFromBoardsMap(jsonString);
                 break;
 
@@ -79,7 +79,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 message = eventDataToJson(theEvent, "Build");
 
                 try {
-                    Send(message); // Send new JSON string over to Robot side.
+                    send(message); // Send new JSON string over to Robot side.
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -97,7 +97,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 message = eventDataToJson(theEvent, "Drive");
 
                 try {
-                    Send(message);
+                    send(message);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -140,13 +140,13 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         channel.queueDeclare(QUEUE_NAME, false, false, false, null);
     }
 
-    private void Send(String message) throws IOException {
+    private void send(String message) throws IOException {
 //        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
 //        System.out.println(" [x] Sent '" + message + "'");
     }
 
     private String eventDataToJson(BEvent theEvent, String command){
-        String jsonString = ParseObjectToJsonString(theEvent.maybeData);
+        String jsonString = parseObjectToJsonString(theEvent.maybeData);
         JsonElement jsonElement = new JsonParser().parse(jsonString);
 
         JsonObject jsonObject = new JsonObject();
@@ -155,7 +155,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         return jsonObject.toString();
     }
 
-    private String ParseObjectToJsonString(Object data){
+    private String parseObjectToJsonString(Object data){
         return new Gson().toJson(data, Map.class);
     }
 }
