@@ -1,12 +1,17 @@
 package il.ac.bgu.cs.bp.samplebpjsproject;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
 
 import java.util.*;
 
 class RobotSensorsData {
     private Map<String, Map<Integer, Map<String, Double>>> portsMap = new HashMap<>();
+
+    String toJson(){
+        return new GsonBuilder().create().toJson(portsMap);
+    }
 
     Map<Integer, Map<String, Double>> getBoardsByName(String name){
         return portsMap.get(name);
@@ -99,7 +104,7 @@ class RobotSensorsData {
                 @SuppressWarnings("unchecked")
                 ArrayList<String> ports = (ArrayList<String>) value;
                 Map<String, Double> portMap = new HashMap<>();
-                ports.forEach(port -> portMap.put(port, null));
+                ports.forEach(port -> portMap.put(fixPortName(port), null));
                 data.get(key).put(1, portMap); // Index of the first board of this type is 1
 
             } else if (value instanceof LinkedTreeMap){ // If board has map boards of this type
@@ -110,12 +115,18 @@ class RobotSensorsData {
                     Set<String> portList = new HashSet<>(intAndList.getValue());
 
                     Map<String, Double> portMap = new HashMap<>();
-                    portList.forEach(port -> portMap.put(port, null));
+                    portList.forEach(port -> portMap.put(fixPortName(port), null));
                     data.get(key).put(Integer.valueOf(intAndList.getKey()), portMap);
                 }
             }
         }
         return data;
+    }
+
+    // Prepend '_' to port names that start with a number
+    private String fixPortName(String name){
+        char firstChar = name.charAt(0);
+        return Character.isDigit(firstChar) ? "_"+name : name;
     }
 //    {"Ev3":{"1":["2"],"2":["3"]},"GrovePi":["D3"]}
 
