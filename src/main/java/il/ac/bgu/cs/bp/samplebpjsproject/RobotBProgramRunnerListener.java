@@ -87,9 +87,10 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
             case "Update":
                 // TODO: Collect sensor data that arrived from Robot and send it as a JSON string to injectEvent
-                String jsonDataString = "{\"EV3\": {\"_0\": {\"_2\": 20}}}"; // Example
+//                String jsonDataString = "{\"EV3\": {\"_0\": {\"_2\": 20}}}"; // Example
 
-                injectEvent(bp, jsonDataString);
+                String json = robotData.toJson();
+                injectEvent(bp, json);
                 break;
 
             case "Drive":
