@@ -7,44 +7,10 @@ import com.google.gson.internal.LinkedTreeMap;
 import java.util.*;
 
 class RobotSensorsData {
-    private Map<String, Map<Integer, Map<String, Double>>> portsMap = new HashMap<>();
+    private Map<String, Map<String, Map<String, Double>>> portsMap = new HashMap<>();
 
     String toJson(){
         return new GsonBuilder().create().toJson(portsMap);
-    }
-
-    Map<Integer, Map<String, Double>> getBoardsByName(String name){
-        return portsMap.get(name);
-    }
-
-    Map<String, Double> getPorts(String boardName, int index){
-        return getBoardsByName(boardName).get(index);
-    }
-
-    Map<String, Double> getPorts(String boardName){
-        return getBoardsByName(boardName).get(1);
-    }
-
-    Double getPortValue(String boardName, int boardIndex, String portName) throws Exception {
-        Map<String, Double> portsSet = getPorts(boardName, boardIndex);
-        for (Map.Entry<String, Double> port : portsSet.entrySet()) {
-            if (port.getKey().equals(portName)){
-                return port.getValue();
-            }
-        }
-        throw new Exception("Port Not Found!");
-    }
-    Double getPortValue(String boardName, String portName) throws Exception {
-        return getPortValue(boardName, 1, portName);
-    }
-
-    void setPortValue(String boardName, int boardIndex, String portName, Double newValue) {
-        Map<String, Double> ports = getPorts(boardName, boardIndex);
-        ports.replace(portName, newValue);
-    }
-
-    void setPortValue(String boardName, String portName, Double value) {
-        setPortValue(boardName, 1, portName, value);
     }
 
     void updateBoardMapValues(String json){
@@ -57,10 +23,9 @@ class RobotSensorsData {
                 @SuppressWarnings("unchecked")
                 Map<String, Map<String, Double>> indexesToPorts = (Map<String, Map<String, Double>>)element.get(boardNameKey);
                 for (Map.Entry<String, Map<String, Double>> boardIndex: indexesToPorts.entrySet()) { // Iterate over board indexes
-                    int boardIndexInt = Integer.valueOf(boardIndex.getKey());
-                    if (portsMap.get(boardName).containsKey(boardIndexInt)){
+                    if (portsMap.get(boardName).containsKey(boardIndex.getKey())){
                         for (Map.Entry<String, Double> portAndValue : boardIndex.getValue().entrySet()) {
-                            setPortValue(boardName, boardIndexInt, portAndValue.getKey(), portAndValue.getValue());
+                            setPortValue(boardName, boardIndex.getKey(), portAndValue.getKey(), portAndValue.getValue());
                         }
                     }
                 }
@@ -70,12 +35,12 @@ class RobotSensorsData {
 
     // Add new sensors from json to mapping
     void addToBoardsMap(String json){
-        Map<String, Map<Integer, Map<String, Double>>> boards = jsonToBoardsMap(json); // Build Map of Robot Ports in json
+        Map<String, Map<String, Map<String, Double>>> boards = jsonToBoardsMap(json); // Build Map of Robot Ports in json
 
-        for (Map.Entry<String, Map<Integer, Map<String, Double>>> board : boards.entrySet()) { // Iterate over board types
+        for (Map.Entry<String, Map<String, Map<String, Double>>> board : boards.entrySet()) { // Iterate over board types
             if (portsMap.keySet().contains(board.getKey())){ // If board type already exist in portsMap
-                for (Map.Entry<Integer, Map<String, Double>> entryInBoard : board.getValue().entrySet()) { // Iterate over board map
-                    Map<Integer, Map<String, Double>> boardsMap = portsMap.get(board.getKey());
+                for (Map.Entry<String, Map<String, Double>> entryInBoard : board.getValue().entrySet()) { // Iterate over board map
+                    Map<String, Map<String, Double>> boardsMap = portsMap.get(board.getKey());
                     if (boardsMap.keySet().contains(entryInBoard.getKey())){ // If  existing boards map already contain this board
                         boardsMap.get(entryInBoard.getKey()).putAll(entryInBoard.getValue()); // Add boards value to pre existing port list
                     } else {
@@ -91,12 +56,12 @@ class RobotSensorsData {
 
     // Remove from mapping any sensors that exist on given json
     void removeFromBoardsMap(String json){
-        Map<String, Map<Integer, Map<String, Double>>> data = jsonToBoardsMap(json);
+        Map<String, Map<String, Map<String, Double>>> data = jsonToBoardsMap(json);
 
-        for (Map.Entry<String, Map<Integer, Map<String, Double>>> entry : data.entrySet()) { // Iterate over boards
+        for (Map.Entry<String, Map<String, Map<String, Double>>> entry : data.entrySet()) { // Iterate over boards
             if (portsMap.keySet().contains(entry.getKey())){ // If our board map contains this board
-                for (Map.Entry<Integer, Map<String, Double>> entryInBoard : entry.getValue().entrySet()) { // Iterate over board indexes
-                    Map<Integer, Map<String, Double>> boardsMap = portsMap.get(entry.getKey());
+                for (Map.Entry<String, Map<String, Double>> entryInBoard : entry.getValue().entrySet()) { // Iterate over board indexes
+                    Map<String, Map<String, Double>> boardsMap = portsMap.get(entry.getKey());
                     if (boardsMap.keySet().contains(entryInBoard.getKey())){ // If our board map contains board with this index
                         entryInBoard.getValue().forEach((port, value) -> boardsMap.get(entryInBoard.getKey()).remove(port));
                     }
@@ -107,8 +72,8 @@ class RobotSensorsData {
 
     // Create new mapping of board name -> index -> ports and values
     // from given json
-    private Map<String, Map<Integer, Map<String, Double>>> jsonToBoardsMap(String json) {
-        Map<String, Map<Integer, Map<String, Double>>> data = new HashMap<>();
+    private Map<String, Map<String, Map<String, Double>>> jsonToBoardsMap(String json) {
+        Map<String, Map<String, Map<String, Double>>> data = new HashMap<>();
         Gson gson = new Gson();
         Map element = gson.fromJson(json, Map.class); // json String to Map
 
@@ -124,8 +89,8 @@ class RobotSensorsData {
                 @SuppressWarnings("unchecked")
                 ArrayList<String> ports = (ArrayList<String>) value;
                 Map<String, Double> portMap = new HashMap<>();
-                ports.forEach(port -> portMap.put(fixPortName(port), null));
-                data.get(key).put(1, portMap); // Index of the first board of this type is 1
+                ports.forEach(port -> portMap.put(fixName(port), null));
+                data.get(key).put("_1", portMap); // Index of the first board of this type is _1
 
             } else if (value instanceof LinkedTreeMap){ // If board has map boards of this type
                 @SuppressWarnings("unchecked")
@@ -135,16 +100,30 @@ class RobotSensorsData {
                     Set<String> portList = new HashSet<>(intAndList.getValue());
 
                     Map<String, Double> portMap = new HashMap<>();
-                    portList.forEach(port -> portMap.put(fixPortName(port), null));
-                    data.get(key).put(Integer.valueOf(intAndList.getKey()), portMap);
+                    portList.forEach(port -> portMap.put(fixName(port), null));
+                    data.get(key).put(fixName(intAndList.getKey()), portMap);
                 }
             }
         }
         return data;
     }
 
-    // Prepend '_' to port names that start with a number
-    private String fixPortName(String name){
+    private Map<String, Map<String, Double>> getBoardsByName(String name){
+        return portsMap.get(name);
+    }
+
+    private Map<String, Double> getPorts(String boardName, String index){
+        return getBoardsByName(boardName).get(index);
+    }
+
+    private void setPortValue(String boardName, String boardIndex, String portName, Double newValue) {
+        Map<String, Double> ports = getPorts(boardName, boardIndex);
+        ports.replace(portName, newValue);
+    }
+
+
+    // Prepend '_' to port and board index names that start with a number
+    private String fixName(String name){
         char firstChar = name.charAt(0);
         return Character.isDigit(firstChar) ? "_"+name : name;
     }
