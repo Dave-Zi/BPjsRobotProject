@@ -47,8 +47,28 @@ class RobotSensorsData {
         setPortValue(boardName, 1, portName, value);
     }
 
-        // Add new sensors from json to mapping
+    void updateBoardMapValues(String json){
+        Gson gson = new Gson();
+        Map element = gson.fromJson(json, Map.class); // json String to Map
 
+        for (Object boardNameKey: element.keySet()) { // Iterate over board types
+            String boardName = (String)boardNameKey;
+            if (portsMap.containsKey(boardName)){ // We want only boards that exist on our map
+                @SuppressWarnings("unchecked")
+                Map<String, Map<String, Double>> indexesToPorts = (Map<String, Map<String, Double>>)element.get(boardNameKey);
+                for (Map.Entry<String, Map<String, Double>> boardIndex: indexesToPorts.entrySet()) { // Iterate over board indexes
+                    int boardIndexInt = Integer.valueOf(boardIndex.getKey());
+                    if (portsMap.get(boardName).containsKey(boardIndexInt)){
+                        for (Map.Entry<String, Double> portAndValue : boardIndex.getValue().entrySet()) {
+                            setPortValue(boardName, boardIndexInt, portAndValue.getKey(), portAndValue.getValue());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Add new sensors from json to mapping
     void addToBoardsMap(String json){
         Map<String, Map<Integer, Map<String, Double>>> boards = jsonToBoardsMap(json); // Build Map of Robot Ports in json
 
