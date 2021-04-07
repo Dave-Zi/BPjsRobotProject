@@ -1,6 +1,9 @@
 package il.ac.bgu.cs.bp.samplebpjsproject;
 
-import com.rabbitmq.client.*;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Delivery;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,10 +33,6 @@ class CommunicationHandler {
         Channel receiveChannel = connection.createChannel();
         receiveChannel.queueDeclare(RECEIVE_QUEUE_NAME, false, false, false, null);
 
-//        DeliverCallback receiveDataCallback = (consumerTag, delivery) -> {
-//            String json = new String(delivery.getBody(), StandardCharsets.UTF_8);
-//            robotData.updateBoardMapValues(json);
-//        };
         receiveChannel.basicConsume(RECEIVE_QUEUE_NAME, true, this::onReceiveCallback, consumerTag -> { });
     }
 

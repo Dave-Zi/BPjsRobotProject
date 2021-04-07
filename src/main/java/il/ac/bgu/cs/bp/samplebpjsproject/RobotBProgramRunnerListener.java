@@ -86,8 +86,10 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 String jsonDataString = "{\"EV3\": {\"_1\": {\"_2\": 20}, \"_2\": {\"_2\": 20, \"_3\": 20}, \"3\": {\"_2\": 20}}, GrovePi: {}}"; // Example
                 robotData.updateBoardMapValues(jsonDataString);
 
-                String json = robotData.toJson();
-                injectEvent(bp, json);
+                if (robotData.isUpdated()){
+                    String json = robotData.toJson();
+                    injectEvent(bp, json);
+                }
                 break;
 
             case "Drive":

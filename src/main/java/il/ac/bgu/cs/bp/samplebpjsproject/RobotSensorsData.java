@@ -8,8 +8,14 @@ import java.util.*;
 
 class RobotSensorsData {
     private Map<String, Map<String, Map<String, Double>>> portsMap = new HashMap<>();
+    private boolean updated;
+
+    synchronized boolean isUpdated() {
+        return updated;
+    }
 
     String toJson(){
+        updated = false;
         return new GsonBuilder().create().toJson(portsMap);
     }
 
@@ -26,6 +32,7 @@ class RobotSensorsData {
                     if (portsMap.get(boardName).containsKey(boardIndex.getKey())){
                         for (Map.Entry<String, Double> portAndValue : boardIndex.getValue().entrySet()) {
                             setPortValue(boardName, boardIndex.getKey(), portAndValue.getKey(), portAndValue.getValue());
+                            updated = true;
                         }
                     }
                 }
