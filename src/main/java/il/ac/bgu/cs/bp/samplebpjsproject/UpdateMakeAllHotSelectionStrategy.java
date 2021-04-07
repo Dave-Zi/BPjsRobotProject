@@ -12,7 +12,10 @@ import il.ac.bgu.cs.bp.bpjs.model.eventsets.EventSet;
 import il.ac.bgu.cs.bp.bpjs.model.eventsets.EventSets;
 import org.mozilla.javascript.Context;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -67,13 +70,21 @@ public class UpdateMakeAllHotSelectionStrategy implements EventSelectionStrategy
                 // So if external event set has a "GetSensorsData" event, let it through in the b-threads turn.
 
                 // tl:dr hot thread with no requested events lets "GetSensorsData" event use its turn.
-                Optional<BEvent> getSensorsDataEvent = externalEvents
-                        .stream()
-                        .filter(e -> e.name.equals("GetSensorsData"))
-                        .findFirst();
 
-                if (getSensorsDataEvent.isPresent()) {
-                    requestedEvents.add(getSensorsDataEvent.get());
+                // We want the latest "GetSensorsData" event
+                BEvent getSensorsDataEvent = externalEvents
+                        .stream()
+                        .reduce(null, (acc, event) -> acc = event.name.equals("GetSensorsData") ? event : acc);
+
+                if (getSensorsDataEvent != null) {
+                    requestedEvents.add(getSensorsDataEvent);
+
+                    // Keep only the latest "GetSensorsData" event.
+                    if (externalEvents.size() > 1){
+                        externalEvents.clear();
+                        externalEvents.add(getSensorsDataEvent);
+                    }
+//                    externalEvents.remove(sensorDataEvent);
                     return requestedEvents;
                 }
 
