@@ -1,5 +1,7 @@
 package il.ac.bgu.cs.bp.samplebpjsproject;
 
+import Communication.CommunicationHandler;
+import RobotData.RobotSensorsData;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -11,6 +13,7 @@ import il.ac.bgu.cs.bp.bpjs.model.BThreadSyncSnapshot;
 import il.ac.bgu.cs.bp.bpjs.model.SafetyViolationTag;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -20,7 +23,10 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     private CommunicationHandler com;
 
     RobotBProgramRunnerListener() throws IOException, TimeoutException {
-        com = new CommunicationHandler(robotData);
+        com = new CommunicationHandler();
+        com.setMyCallback((
+                (consumerTag, delivery) ->
+                        robotData.updateBoardMapValues(new String(delivery.getBody(), StandardCharsets.UTF_8))));
         com.openQueues();
     }
 
@@ -44,7 +50,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         String message, jsonString;
         switch (theEvent.name){
             case "Subscribe":
-                System.out.println("Subscribing...");
+//                System.out.println("Subscribing...");
                 message = eventDataToJson(theEvent, "Subscribe");
 
                 try {
@@ -58,7 +64,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 break;
 
             case "Unsubscribe":
-                System.out.println("Unsubscribing...");
+//                System.out.println("Unsubscribing...");
                 message = eventDataToJson(theEvent, "Unsubscribe");
 
                 try {
@@ -72,7 +78,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 break;
 
             case "Build":
-                System.out.println("Building...");
+//                System.out.println("Building...");
                 message = eventDataToJson(theEvent, "Build");
 
                 try {
@@ -83,8 +89,8 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 break;
 
             case "Update":
-                String jsonDataString = "{\"EV3\": {\"_1\": {\"_2\": 20}, \"_2\": {\"_2\": 20, \"_3\": 20}, \"3\": {\"_2\": 20}}, GrovePi: {}}"; // Example
-                robotData.updateBoardMapValues(jsonDataString);
+//                String jsonDataString = "{\"EV3\": {\"_1\": {\"_2\": 20}, \"_2\": {\"_2\": 20, \"_3\": 20}, \"3\": {\"_2\": 20}}, GrovePi: {}}"; // Example
+//                robotData.updateBoardMapValues(jsonDataString);
 
                 if (robotData.isUpdated()){
                     String json = robotData.toJson();
@@ -93,8 +99,9 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 break;
 
             case "Drive":
-                System.out.println("Driving...");
+//                System.out.println("Driving...");
                 message = eventDataToJson(theEvent, "Drive");
+                System.out.println(theEvent);
 
                 try {
                     com.send(message);
@@ -110,6 +117,15 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 //                    e.printStackTrace();
 //                }
                 System.out.println("!!!");
+                break;
+
+            case "GetSensorsData":
+//                try {
+//                    Send("Red");
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+                System.out.println(theEvent.maybeData);
                 break;
         }
     }

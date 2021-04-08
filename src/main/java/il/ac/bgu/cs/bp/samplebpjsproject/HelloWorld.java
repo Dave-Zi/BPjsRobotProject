@@ -1,7 +1,6 @@
 package il.ac.bgu.cs.bp.samplebpjsproject;
 
 import il.ac.bgu.cs.bp.bpjs.execution.BProgramRunner;
-import il.ac.bgu.cs.bp.bpjs.execution.listeners.PrintBProgramRunnerListener;
 import il.ac.bgu.cs.bp.bpjs.model.BProgram;
 import il.ac.bgu.cs.bp.bpjs.model.ResourceBProgram;
 
@@ -17,13 +16,13 @@ public class HelloWorld {
     public static void main(String[] args) throws IOException, TimeoutException {
         // This will load the program file  <Project>/src/main/resources/HelloBPjsWorld.js
         final BProgram bprog = new ResourceBProgram("HelloBPjsWorld.js");
-        bprog.setWaitForExternalEvents(true);
+//        bprog.setWaitForExternalEvents(true);
 
         BProgramRunner rnr = new BProgramRunner(bprog);
         bprog.setEventSelectionStrategy(new UpdateMakeAllHotSelectionStrategy());
 
         // Print program events to the console
-        rnr.addListener( new PrintBProgramRunnerListener() );
+//        rnr.addListener( new PrintBProgramRunnerListener() );
         rnr.addListener( new RobotBProgramRunnerListener() );
 
 

@@ -15,6 +15,14 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <exec.mainClass>il.ac.bgu.cs.bp.samplebpjsproject.HelloWorld</exec.mainClass>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>myMavenRepo</id>
+            <url>https://mymavenrepo.com/repo/hMt8ClBV8kQ64QtGXSYF/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>com.rabbitmq</groupId>
@@ -31,5 +39,12 @@
             <artifactId>BPjs</artifactId>
             <version>0.12.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.iot</groupId>
+            <artifactId>RobotUtils</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
 </project>
