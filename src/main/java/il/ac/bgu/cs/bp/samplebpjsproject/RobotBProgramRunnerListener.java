@@ -23,11 +23,15 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     private CommunicationHandler com;
 
     RobotBProgramRunnerListener() throws IOException, TimeoutException {
-        com = new CommunicationHandler();
+        com = new CommunicationHandler("Commands", "Data");
         com.setMyCallback((
-                (consumerTag, delivery) ->
-                        robotData.updateBoardMapValues(new String(delivery.getBody(), StandardCharsets.UTF_8))));
-        com.openQueues();
+                (consumerTag, delivery) ->{
+                    String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+                    System.out.println("Received: "+ message);
+                    robotData.updateBoardMapValues(message);
+                }));
+        com.openSendQueue(true);
+        com.openReceiveQueue(true);
     }
 
     @Override
@@ -101,7 +105,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             case "Drive":
 //                System.out.println("Driving...");
                 message = eventDataToJson(theEvent, "Drive");
-                System.out.println(theEvent);
+//                System.out.println(theEvent);
 
                 try {
                     com.send(message);
