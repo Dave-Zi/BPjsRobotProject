@@ -32,7 +32,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             robotData.updateBoardMapValues(message);
         });
 //        com.setCredentials("10.0.0.18", "pi", "pi");
-        com.openSendQueue(true);
+        com.openSendQueue(true, true);
         com.openReceiveQueue(true);
     }
 
@@ -119,7 +119,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         message = eventDataToJson(theEvent, "Subscribe");
 
         try {
-            com.send(message);
+            com.send(message, true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -135,7 +135,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         message = eventDataToJson(theEvent, "Unsubscribe");
 
         try {
-            com.send(message);
+            com.send(message, true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -150,7 +150,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         message = eventDataToJson(theEvent, "Build");
 
         try {
-            com.send(message); // Send new JSON string over to Robot side.
+            com.send(message, true); // Send new JSON string over to Robot side.
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -163,7 +163,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 //                System.out.println(theEvent);
 
         try {
-            com.send(message);
+            com.send(message, false);
         } catch (IOException e) {
             e.printStackTrace();
         }
