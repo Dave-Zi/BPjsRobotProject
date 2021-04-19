@@ -33,7 +33,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         });
 //        com.setCredentials("10.0.0.18", "pi", "pi");
         com.openSendQueue(true, true);
-        com.openReceiveQueue(true);
+        com.openReceiveQueue(true, false);
     }
 
     @Override
