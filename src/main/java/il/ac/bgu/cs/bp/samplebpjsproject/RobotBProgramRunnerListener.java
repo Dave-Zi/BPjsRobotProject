@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
@@ -24,12 +26,12 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     RobotBProgramRunnerListener() throws IOException, TimeoutException {
         com = new CommunicationHandler("Commands", "Data");
-        com.setMyCallback((
-                (consumerTag, delivery) ->{
-                    String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                    System.out.println("Received: "+ message);
-                    robotData.updateBoardMapValues(message);
-                }));
+        com.setMyCallback((consumerTag, delivery) -> {
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+            System.out.println("Received: "+ message);
+            robotData.updateBoardMapValues(message);
+        });
+//        com.setCredentials("10.0.0.18", "pi", "pi");
         com.openSendQueue(true);
         com.openReceiveQueue(true);
     }
@@ -51,86 +53,12 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     @Override
     public void eventSelected(BProgram bp, BEvent theEvent) {
-        String message, jsonString;
-        switch (theEvent.name){
-            case "Subscribe":
-//                System.out.println("Subscribing...");
-                message = eventDataToJson(theEvent, "Subscribe");
-
-                try {
-                    com.send(message);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                jsonString = parseObjectToJsonString(theEvent.maybeData);
-                robotData.addToBoardsMap(jsonString);
-                break;
-
-            case "Unsubscribe":
-//                System.out.println("Unsubscribing...");
-                message = eventDataToJson(theEvent, "Unsubscribe");
-
-                try {
-                    com.send(message);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                jsonString = parseObjectToJsonString(theEvent.maybeData);
-                robotData.removeFromBoardsMap(jsonString);
-                break;
-
-            case "Build":
-//                System.out.println("Building...");
-                message = eventDataToJson(theEvent, "Build");
-
-                try {
-                    com.send(message); // Send new JSON string over to Robot side.
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
-
-            case "Update":
-//                String jsonDataString = "{\"EV3\": {\"_1\": {\"_2\": 20}, \"_2\": {\"_2\": 20, \"_3\": 20}, \"3\": {\"_2\": 20}}, GrovePi: {}}"; // Example
-//                robotData.updateBoardMapValues(jsonDataString);
-
-                if (robotData.isUpdated()){
-                    String json = robotData.toJson();
-                    injectEvent(bp, json);
-                }
-                break;
-
-            case "Drive":
-//                System.out.println("Driving...");
-                message = eventDataToJson(theEvent, "Drive");
-//                System.out.println(theEvent);
-
-                try {
-                    com.send(message);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
-
-            case "Test":
-//                try {
-//                    Send("Red");
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-                System.out.println("!!!");
-                break;
-
-            case "GetSensorsData":
-//                try {
-//                    Send("Red");
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-                System.out.println(theEvent.maybeData);
-                break;
+        if (commandToMethod.containsKey(theEvent.name)){
+            try {
+                commandToMethod.get(theEvent.name).executeCommand(bp, theEvent);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
     private void injectEvent(BProgram bp, String message){
@@ -149,7 +77,6 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     @Override
     public void bthreadDone(BProgram bp, BThreadSyncSnapshot theBThread) { }
 
-
     private String eventDataToJson(BEvent theEvent, String command){
         String jsonString = parseObjectToJsonString(theEvent.maybeData);
         JsonElement jsonElement = new JsonParser().parse(jsonString);
@@ -162,5 +89,93 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     private String parseObjectToJsonString(Object data){
         return new Gson().toJson(data, Map.class);
+    }
+
+    /**
+     * Uniform Interface for BPjs Commands
+     */
+    @FunctionalInterface
+    private interface ICommand {
+        void executeCommand(BProgram bp, BEvent theEvent) throws IOException;
+    }
+
+    private ICommand subscribe = this::subscribe;
+    private ICommand unsubscribe = this::unsubscribe;
+    private ICommand build = this::build;
+    private ICommand drive = this::drive;
+    private ICommand update = this::update;
+
+    private Map<String, ICommand> commandToMethod = Stream.of(new Object[][] {
+            { "Subscribe",  subscribe},
+            { "Unsubscribe", unsubscribe },
+            { "Build", build },
+            { "Drive", drive },
+            { "Update", update }
+    }).collect(Collectors.toMap(data -> (String) data[0], data -> (ICommand) data[1]));
+
+    private void subscribe(BProgram bp, BEvent theEvent){
+        String message, jsonString;
+//                System.out.println("Subscribing...");
+        message = eventDataToJson(theEvent, "Subscribe");
+
+        try {
+            com.send(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        jsonString = parseObjectToJsonString(theEvent.maybeData);
+        robotData.addToBoardsMap(jsonString);
+
+    }
+
+    private void unsubscribe(BProgram bp, BEvent theEvent){
+        String message, jsonString;
+//                System.out.println("Unsubscribing...");
+        message = eventDataToJson(theEvent, "Unsubscribe");
+
+        try {
+            com.send(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        jsonString = parseObjectToJsonString(theEvent.maybeData);
+        robotData.removeFromBoardsMap(jsonString);
+    }
+
+    private void build(BProgram bp, BEvent theEvent){
+        String message;
+//                System.out.println("Building...");
+        message = eventDataToJson(theEvent, "Build");
+
+        try {
+            com.send(message); // Send new JSON string over to Robot side.
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void drive(BProgram bp, BEvent theEvent){
+        String message;
+//                System.out.println("Driving...");
+        message = eventDataToJson(theEvent, "Drive");
+//                System.out.println(theEvent);
+
+        try {
+            com.send(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void update(BProgram bp, BEvent theEvent){
+//                String jsonDataString = "{\"EV3\": {\"_1\": {\"_2\": 20}, \"_2\": {\"_2\": 20, \"_3\": 20}, \"3\": {\"_2\": 20}}, GrovePi: {}}"; // Example
+//                robotData.updateBoardMapValues(jsonDataString);
+
+        if (robotData.isUpdated()){
+            String json = robotData.toJson();
+            injectEvent(bp, json);
+        }
     }
 }
