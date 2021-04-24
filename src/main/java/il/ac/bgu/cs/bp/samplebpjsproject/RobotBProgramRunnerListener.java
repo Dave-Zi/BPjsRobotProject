@@ -113,6 +113,32 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         return new Gson().toJson(data, Map.class);
     }
 
+    /**
+     * Uniform Interface for BPjs Commands
+     */
+    @FunctionalInterface
+    private interface ICommand {
+        void executeCommand(BProgram bp, BEvent theEvent) throws IOException;
+    }
+
+    private ICommand subscribe = this::subscribe;
+    private ICommand unsubscribe = this::unsubscribe;
+    private ICommand build = this::build;
+    private ICommand drive = this::drive;
+    private ICommand rotate = this::rotate;
+    private ICommand setSensor = this::setSensor;
+    private ICommand update = this::update;
+
+    private Map<String, ICommand> commandToMethod = Stream.of(new Object[][]{
+            {"Subscribe", subscribe},
+            {"Unsubscribe", unsubscribe},
+            {"Build", build},
+            {"Drive", drive},
+            {"Rotate", rotate},
+            {"SetSensor", setSensor},
+            {"Update", update}
+    }).collect(Collectors.toMap(data -> (String) data[0], data -> (ICommand) data[1]));
+
     private void subscribe(BProgram bp, BEvent theEvent) {
         String message, jsonString;
 //                System.out.println("Subscribing...");
@@ -168,6 +194,31 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             e.printStackTrace();
         }
     }
+
+    private void rotate(BProgram bp, BEvent theEvent) {
+        String message;
+        message = eventDataToJson(theEvent, "Rotate");
+//                System.out.println(theEvent);
+
+        try {
+            com.send(message, false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setSensor(BProgram bp, BEvent theEvent) {
+        String message;
+        message = eventDataToJson(theEvent, "SetSensor");
+//                System.out.println(theEvent);
+
+        try {
+            com.send(message, false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void update(BProgram bp, BEvent theEvent) {
 //                String jsonDataString = "{\"EV3\": {\"_1\": {\"_2\": 20}, \"_2\": {\"_2\": 20, \"_3\": 20}, \"3\": {\"_2\": 20}}, GrovePi: {}}"; // Example
