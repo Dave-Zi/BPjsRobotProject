@@ -23,37 +23,54 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     private RobotSensorsData robotData = new RobotSensorsData();
     private ICommunication com;
+    private ICommand subscribe = this::subscribe;
+    private ICommand unsubscribe = this::unsubscribe;
+    private ICommand build = this::build;
+    private ICommand drive = this::drive;
+    private ICommand update = this::update;
+    private Map<String, ICommand> commandToMethod = Stream.of(new Object[][]{
+            {"Subscribe", subscribe},
+            {"Unsubscribe", unsubscribe},
+            {"Build", build},
+            {"Drive", drive},
+            {"Update", update}
+    }).collect(Collectors.toMap(data -> (String) data[0], data -> (ICommand) data[1]));
 
     RobotBProgramRunnerListener(ICommunication communication) throws IOException, TimeoutException {
         com = communication;
         com.setCallback((consumerTag, delivery) -> {
             String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-            System.out.println("Received: "+ message);
+            System.out.println("Received: " + message);
             robotData.updateBoardMapValues(message);
         });
-//        com.setCredentials("10.0.0.18", "pi", "pi");
+        com.setCredentials("10.0.0.12", "pi", "pi");
         com.openSendQueue(true, true);
         com.openReceiveQueue(true, false);
     }
 
     @Override
-    public void starting(BProgram bp) { }
+    public void starting(BProgram bp) {
+    }
 
     @Override
-    public void started(BProgram bp) { }
+    public void started(BProgram bp) {
+    }
 
     @Override
-    public void ended(BProgram bp) { }
+    public void ended(BProgram bp) {
+    }
 
     @Override
-    public void assertionFailed(BProgram bProgram, SafetyViolationTag safetyViolationTag) { }
+    public void assertionFailed(BProgram bProgram, SafetyViolationTag safetyViolationTag) {
+    }
 
     @Override
-    public void halted(BProgram bp) { }
+    public void halted(BProgram bp) {
+    }
 
     @Override
     public void eventSelected(BProgram bp, BEvent theEvent) {
-        if (commandToMethod.containsKey(theEvent.name)){
+        if (commandToMethod.containsKey(theEvent.name)) {
             try {
                 commandToMethod.get(theEvent.name).executeCommand(bp, theEvent);
             } catch (IOException e) {
@@ -61,23 +78,28 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             }
         }
     }
-    private void injectEvent(BProgram bp, String message){
+
+    private void injectEvent(BProgram bp, String message) {
         bp.enqueueExternalEvent(new BEvent("GetSensorsData", message));
     }
 
     @Override
-    public void superstepDone(BProgram bp) { }
+    public void superstepDone(BProgram bp) {
+    }
 
     @Override
-    public void bthreadAdded(BProgram bp, BThreadSyncSnapshot theBThread) { }
+    public void bthreadAdded(BProgram bp, BThreadSyncSnapshot theBThread) {
+    }
 
     @Override
-    public void bthreadRemoved(BProgram bp, BThreadSyncSnapshot theBThread) { }
+    public void bthreadRemoved(BProgram bp, BThreadSyncSnapshot theBThread) {
+    }
 
     @Override
-    public void bthreadDone(BProgram bp, BThreadSyncSnapshot theBThread) { }
+    public void bthreadDone(BProgram bp, BThreadSyncSnapshot theBThread) {
+    }
 
-    private String eventDataToJson(BEvent theEvent, String command){
+    private String eventDataToJson(BEvent theEvent, String command) {
         String jsonString = parseObjectToJsonString(theEvent.maybeData);
         JsonElement jsonElement = new JsonParser().parse(jsonString);
 
@@ -87,33 +109,11 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         return jsonObject.toString();
     }
 
-    private String parseObjectToJsonString(Object data){
+    private String parseObjectToJsonString(Object data) {
         return new Gson().toJson(data, Map.class);
     }
 
-    /**
-     * Uniform Interface for BPjs Commands
-     */
-    @FunctionalInterface
-    private interface ICommand {
-        void executeCommand(BProgram bp, BEvent theEvent) throws IOException;
-    }
-
-    private ICommand subscribe = this::subscribe;
-    private ICommand unsubscribe = this::unsubscribe;
-    private ICommand build = this::build;
-    private ICommand drive = this::drive;
-    private ICommand update = this::update;
-
-    private Map<String, ICommand> commandToMethod = Stream.of(new Object[][] {
-            { "Subscribe",  subscribe},
-            { "Unsubscribe", unsubscribe },
-            { "Build", build },
-            { "Drive", drive },
-            { "Update", update }
-    }).collect(Collectors.toMap(data -> (String) data[0], data -> (ICommand) data[1]));
-
-    private void subscribe(BProgram bp, BEvent theEvent){
+    private void subscribe(BProgram bp, BEvent theEvent) {
         String message, jsonString;
 //                System.out.println("Subscribing...");
         message = eventDataToJson(theEvent, "Subscribe");
@@ -129,7 +129,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     }
 
-    private void unsubscribe(BProgram bp, BEvent theEvent){
+    private void unsubscribe(BProgram bp, BEvent theEvent) {
         String message, jsonString;
 //                System.out.println("Unsubscribing...");
         message = eventDataToJson(theEvent, "Unsubscribe");
@@ -144,7 +144,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         robotData.removeFromBoardsMap(jsonString);
     }
 
-    private void build(BProgram bp, BEvent theEvent){
+    private void build(BProgram bp, BEvent theEvent) {
         String message;
 //                System.out.println("Building...");
         message = eventDataToJson(theEvent, "Build");
@@ -156,7 +156,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         }
     }
 
-    private void drive(BProgram bp, BEvent theEvent){
+    private void drive(BProgram bp, BEvent theEvent) {
         String message;
 //                System.out.println("Driving...");
         message = eventDataToJson(theEvent, "Drive");
@@ -169,13 +169,21 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         }
     }
 
-    private void update(BProgram bp, BEvent theEvent){
+    private void update(BProgram bp, BEvent theEvent) {
 //                String jsonDataString = "{\"EV3\": {\"_1\": {\"_2\": 20}, \"_2\": {\"_2\": 20, \"_3\": 20}, \"3\": {\"_2\": 20}}, GrovePi: {}}"; // Example
 //                robotData.updateBoardMapValues(jsonDataString);
 
-        if (robotData.isUpdated()){
+        if (robotData.isUpdated()) {
             String json = robotData.toJson();
             injectEvent(bp, json);
         }
+    }
+
+    /**
+     * Uniform Interface for BPjs Commands
+     */
+    @FunctionalInterface
+    private interface ICommand {
+        void executeCommand(BProgram bp, BEvent theEvent) throws IOException;
     }
 }
