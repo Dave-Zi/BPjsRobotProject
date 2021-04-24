@@ -1,6 +1,6 @@
 package il.ac.bgu.cs.bp.samplebpjsproject;
 
-import Communication.CommunicationHandler;
+import Communication.ICommunication;
 import RobotData.RobotSensorsData;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -22,11 +22,11 @@ import java.util.stream.Stream;
 public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     private RobotSensorsData robotData = new RobotSensorsData();
-    private CommunicationHandler com;
+    private ICommunication com;
 
-    RobotBProgramRunnerListener() throws IOException, TimeoutException {
-        com = new CommunicationHandler("Commands", "Data");
-        com.setMyCallback((consumerTag, delivery) -> {
+    RobotBProgramRunnerListener(ICommunication communication) throws IOException, TimeoutException {
+        com = communication;
+        com.setCallback((consumerTag, delivery) -> {
             String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
             System.out.println("Received: "+ message);
             robotData.updateBoardMapValues(message);
