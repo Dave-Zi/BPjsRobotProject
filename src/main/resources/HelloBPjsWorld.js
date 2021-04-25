@@ -44,7 +44,6 @@ var dataEventSet = bp.EventSet("", function (e) {
 
 bp.registerBThread("Avoid walls ahead", function () {
     // bp.sync({request: bp.Event("Subscribe", {"EV3": {1: ["2"], 2: ["3"]}, "GrovePi": ["D3"]})});
-    // bp.sync({request: bp.Event("Update")});
     // while(true) {
     //     var e = bp.sync({ waitFor: scanDataEventSet });
     //     var ranges = e.data.ranges;
@@ -55,12 +54,6 @@ bp.registerBThread("Avoid walls ahead", function () {
     // }
 });
 
-bp.registerBThread("Get Sensors Data", function () {
-    while (true) {
-        bp.sync({request: bp.Event("Update")});
-    }
-    // bp.sync({request: bp.Event("Update")});
-});
 
 // bp.registerBThread("Do Something with Data", function () {
 //     bp.sync({request: bp.Event("Subscribe", {"EV3": {1: ["2"], 2: ["3"]}, "GrovePi": ["D3"]})});
@@ -79,7 +72,7 @@ bp.registerBThread("Align to Left Wall", function () {
         var data = JSON.parse(e.data);
         var myDistance = data.EV3._1._2; // get data from port 2 on Ev3
 
-        if (myDistance > 10) { // Offset is incrementally changed to slowly fix direction until wall is found and aligned with.
+        if (myDistance > 20) { // Offset is incrementally changed to slowly fix direction until wall is found and aligned with.
             speedOffset = Math.max(speedOffset, 0); // speedOffset is reset to 0 if it was negative
             speedOffset = Math.min(3, speedOffset + 1); // Incrementally add 1 to the speed offset to max difference of 10
         } else if (myDistance < 10) {
