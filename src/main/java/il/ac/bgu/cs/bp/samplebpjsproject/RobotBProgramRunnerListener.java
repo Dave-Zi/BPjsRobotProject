@@ -27,7 +27,6 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     private ICommand unsubscribe = this::unsubscribe;
     private ICommand build = this::build;
     private ICommand drive = this::drive;
-    private ICommand update = this::update;
     private ICommand rotate = this::rotate;
     private ICommand setSensor = this::setSensor;
     private Map<String, ICommand> commandToMethod = Stream.of(new Object[][]{
@@ -37,17 +36,16 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             {"Drive", drive},
             {"Rotate", rotate},
             {"SetSensor", setSensor},
-            {"Update", update}
     }).collect(Collectors.toMap(data -> (String) data[0], data -> (ICommand) data[1]));
 
     RobotBProgramRunnerListener(ICommunication communication) throws IOException, TimeoutException {
         com = communication;
         com.setCallback((consumerTag, delivery) -> {
             String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-            System.out.println("Received: " + message);
+//            System.out.println("Received: " + message);
             robotData.updateBoardMapValues(message);
         });
-        com.setCredentials("10.0.0.12", "pi", "pi");
+//        com.setCredentials("10.0.0.12", "pi", "pi");
         com.openSendQueue(true, true);
         com.openReceiveQueue(true, false);
     }
@@ -83,12 +81,11 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         }
     }
 
-    private void injectEvent(BProgram bp, String message) {
-        bp.enqueueExternalEvent(new BEvent("GetSensorsData", message));
-    }
 
     @Override
     public void superstepDone(BProgram bp) {
+        String json = robotData.toJson();
+        bp.enqueueExternalEvent(new BEvent("GetSensorsData", json));
     }
 
     @Override
@@ -197,15 +194,6 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         }
     }
 
-    private void update(BProgram bp, BEvent theEvent) {
-//                String jsonDataString = "{\"EV3\": {\"_1\": {\"_2\": 20}, \"_2\": {\"_2\": 20, \"_3\": 20}, \"3\": {\"_2\": 20}}, GrovePi: {}}"; // Example
-//                robotData.updateBoardMapValues(jsonDataString);
-
-        if (robotData.isUpdated()) {
-            String json = robotData.toJson();
-            injectEvent(bp, json);
-        }
-    }
     /**
      * Uniform Interface for BPjs Commands
      */

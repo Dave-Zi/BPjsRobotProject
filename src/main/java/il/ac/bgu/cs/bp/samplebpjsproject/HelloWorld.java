@@ -21,7 +21,6 @@ public class HelloWorld {
         bprog.setWaitForExternalEvents(true);
 
         BProgramRunner rnr = new BProgramRunner(bprog);
-        bprog.setEventSelectionStrategy(new UpdateMakeAllHotSelectionStrategy());
 
         // Print program events to the console
 //        rnr.addListener( new PrintBProgramRunnerListener() );
