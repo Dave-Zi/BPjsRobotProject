@@ -54,14 +54,21 @@ bp.registerBThread("Avoid walls ahead", function () {
     // }
 });
 
+var direction = 1;
 
-// bp.registerBThread("Do Something with Data", function () {
-//     bp.sync({request: bp.Event("Subscribe", {"EV3": {1: ["2"], 2: ["3"]}, "GrovePi": ["D3"]})});
-//     var e = bp.sync({waitFor: dataEventSet});
-//     var data = JSON.parse(e.data);
-//     var s  = data.EV3._1._2;
-//     bp.sync({request: bp.Event("Test", {"t": s})})
-// });
+bp.registerBThread("Do Something with Data", function () {
+    bp.sync({request: bp.Event("Subscribe", {"GrovePi": ["D4"]})});
+
+    while (true) {
+        var e = bp.sync({waitFor: dataEventSet});
+        var data = JSON.parse(e.data);
+        var distance  = data.GrovePi._1.D4;
+        if (distance < 15){
+            direction = -1 * direction ;
+        }
+
+    }
+});
 
 bp.registerBThread("Align to Left Wall", function () {
     bp.sync({request: bp.Event("Subscribe", {"EV3": ["2"]})});
@@ -81,7 +88,7 @@ bp.registerBThread("Align to Left Wall", function () {
         } else {
             speedOffset = 0
         }
-        bp.sync({request: bp.Event("Drive", {"EV3": {"B": 15 - speedOffset, "C": 15 + speedOffset}})});
+        bp.sync({request: bp.Event("Drive", {"EV3": {"B": direction * (15 - speedOffset), "C": direction * (15 + speedOffset)}})});
     }
 });
 

@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rabbitmq.client.AlreadyClosedException;
 import il.ac.bgu.cs.bp.bpjs.execution.listeners.BProgramRunnerListener;
 import il.ac.bgu.cs.bp.bpjs.model.BEvent;
 import il.ac.bgu.cs.bp.bpjs.model.BProgram;
@@ -85,6 +86,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     @Override
     public void superstepDone(BProgram bp) {
         String json = robotData.toJson();
+        System.out.println(json);
         bp.enqueueExternalEvent(new BEvent("GetSensorsData", json));
     }
 
@@ -123,7 +125,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             com.send(message, true);
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        } catch (AlreadyClosedException ignore) { }
 
         jsonString = parseObjectToJsonString(theEvent.maybeData);
         robotData.addToBoardsMap(jsonString);
@@ -139,7 +141,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             com.send(message, true);
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        } catch (AlreadyClosedException ignore) { }
 
         jsonString = parseObjectToJsonString(theEvent.maybeData);
         robotData.removeFromBoardsMap(jsonString);
@@ -154,7 +156,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             com.send(message, true); // Send new JSON string over to Robot side.
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        } catch (AlreadyClosedException ignore) { }
     }
 
     private void drive(BProgram bp, BEvent theEvent) {
@@ -167,7 +169,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             com.send(message, false);
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        } catch (AlreadyClosedException ignore) { }
     }
 
     private void rotate(BProgram bp, BEvent theEvent) {
@@ -179,7 +181,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             com.send(message, false);
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        } catch (AlreadyClosedException ignore) { }
     }
 
     private void setSensor(BProgram bp, BEvent theEvent) {
@@ -191,7 +193,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             com.send(message, true);
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        } catch (AlreadyClosedException ignore) { }
     }
 
     /**
