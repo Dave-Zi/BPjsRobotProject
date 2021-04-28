@@ -1,6 +1,7 @@
 package il.ac.bgu.cs.bp.samplebpjsproject;
 
 import Communication.ICommunication;
+import Communication.QueueNameEnum;
 import RobotData.RobotSensorsData;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -16,7 +17,6 @@ import il.ac.bgu.cs.bp.bpjs.model.SafetyViolationTag;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +30,8 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     private ICommand drive = this::drive;
     private ICommand rotate = this::rotate;
     private ICommand setSensor = this::setSensor;
+    private ICommand myAlgorithm = this::myAlgorithm;
+    private ICommand test = this::test;
     private Map<String, ICommand> commandToMethod = Stream.of(new Object[][]{
             {"Subscribe", subscribe},
             {"Unsubscribe", unsubscribe},
@@ -37,18 +39,22 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             {"Drive", drive},
             {"Rotate", rotate},
             {"SetSensor", setSensor},
+            {"MyAlgorithm", myAlgorithm},
+            {"Test", test}
     }).collect(Collectors.toMap(data -> (String) data[0], data -> (ICommand) data[1]));
 
-    RobotBProgramRunnerListener(ICommunication communication) throws IOException, TimeoutException {
+    RobotBProgramRunnerListener(ICommunication communication, BProgram bp) throws IOException {
         com = communication;
-        com.setCallback((consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-//            System.out.println("Received: " + message);
-            robotData.updateBoardMapValues(message);
-        });
+        com.purgeQueue(QueueNameEnum.Commands);
+        com.purgeQueue(QueueNameEnum.SOS);
+        com.purgeQueue(QueueNameEnum.Data);
+        com.purgeQueue(QueueNameEnum.Free);
+        com.consumeFromQueue(QueueNameEnum.Data, (consumerTag, delivery) ->
+                robotData.updateBoardMapValues(new String(delivery.getBody(), StandardCharsets.UTF_8)));
+        com.consumeFromQueue(QueueNameEnum.Free, (consumerTag, delivery) ->
+                bp.enqueueExternalEvent(new BEvent("GetAlgorithmResult", new String(delivery.getBody(), StandardCharsets.UTF_8))));
+
 //        com.setCredentials("10.0.0.12", "pi", "pi");
-        com.openSendQueue(true, true);
-        com.openReceiveQueue(true, false);
     }
 
     @Override
@@ -86,7 +92,7 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     @Override
     public void superstepDone(BProgram bp) {
         String json = robotData.toJson();
-        System.out.println(json);
+//        System.out.println(json);
         bp.enqueueExternalEvent(new BEvent("GetSensorsData", json));
     }
 
@@ -116,81 +122,54 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         return new Gson().toJson(data, Map.class);
     }
 
+    private void test(BProgram bp, BEvent theEvent) {
+        System.out.println("Test Completed!");
+    }
+
     private void subscribe(BProgram bp, BEvent theEvent) {
-        String message, jsonString;
-//                System.out.println("Subscribing...");
-        message = eventDataToJson(theEvent, "Subscribe");
+        String message = eventDataToJson(theEvent, "Subscribe");
+        String jsonString = parseObjectToJsonString(theEvent.maybeData);
 
-        try {
-            com.send(message, true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (AlreadyClosedException ignore) { }
-
-        jsonString = parseObjectToJsonString(theEvent.maybeData);
+        send(message, QueueNameEnum.SOS);
         robotData.addToBoardsMap(jsonString);
-
     }
 
     private void unsubscribe(BProgram bp, BEvent theEvent) {
-        String message, jsonString;
-//                System.out.println("Unsubscribing...");
-        message = eventDataToJson(theEvent, "Unsubscribe");
+        String message = eventDataToJson(theEvent, "Unsubscribe");
+        String jsonString = parseObjectToJsonString(theEvent.maybeData);
 
-        try {
-            com.send(message, true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (AlreadyClosedException ignore) { }
-
-        jsonString = parseObjectToJsonString(theEvent.maybeData);
+        send(message, QueueNameEnum.SOS);
         robotData.removeFromBoardsMap(jsonString);
     }
 
     private void build(BProgram bp, BEvent theEvent) {
-        String message;
-//                System.out.println("Building...");
-        message = eventDataToJson(theEvent, "Build");
-
-        try {
-            com.send(message, true); // Send new JSON string over to Robot side.
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (AlreadyClosedException ignore) { }
+        String message = eventDataToJson(theEvent, "Build");
+        send(message, QueueNameEnum.SOS);
     }
 
     private void drive(BProgram bp, BEvent theEvent) {
-        String message;
-//                System.out.println("Driving...");
-        message = eventDataToJson(theEvent, "Drive");
-//                System.out.println(theEvent);
-
-        try {
-            com.send(message, false);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (AlreadyClosedException ignore) { }
+        String message = eventDataToJson(theEvent, "Drive");
+        send(message, QueueNameEnum.Commands);
     }
 
     private void rotate(BProgram bp, BEvent theEvent) {
-        String message;
-        message = eventDataToJson(theEvent, "Rotate");
-//                System.out.println(theEvent);
-
-        try {
-            com.send(message, false);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (AlreadyClosedException ignore) { }
+        String message = eventDataToJson(theEvent, "Rotate");
+        send(message, QueueNameEnum.Commands);
     }
 
     private void setSensor(BProgram bp, BEvent theEvent) {
-        String message;
-        message = eventDataToJson(theEvent, "SetSensor");
-//                System.out.println(theEvent);
+        String message = eventDataToJson(theEvent, "SetSensor");
+        send(message, QueueNameEnum.SOS);
+    }
 
+    private void myAlgorithm(BProgram bp, BEvent theEvent) {
+        String message = eventDataToJson(theEvent, "MyAlgorithm");
+        send(message, QueueNameEnum.SOS);
+    }
+
+    private void send(String message, QueueNameEnum queue){
         try {
-            com.send(message, true);
+            com.send(message, queue);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (AlreadyClosedException ignore) { }
