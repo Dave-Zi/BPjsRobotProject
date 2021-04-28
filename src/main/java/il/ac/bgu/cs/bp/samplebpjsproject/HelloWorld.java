@@ -18,15 +18,15 @@ public class HelloWorld {
 
     public static void main(String[] args) throws IOException, TimeoutException {
         // This will load the program file  <Project>/src/main/resources/HelloBPjsWorld.js
-        final BProgram bprog = new ResourceBProgram("HelloBPjsWorld.js");
-        bprog.setWaitForExternalEvents(true);
+        final BProgram bProgram = new ResourceBProgram("HelloBPjsWorld.js");
+        bProgram.setWaitForExternalEvents(true);
 
-        BProgramRunner rnr = new BProgramRunner(bprog);
+        BProgramRunner rnr = new BProgramRunner(bProgram);
 
         // Print program events to the console
 //        rnr.addListener( new PrintBProgramRunnerListener() );
         ICommunication communication = new CommunicationHandler();
-        rnr.addListener(new RobotBProgramRunnerListener(communication, bprog));
+        rnr.addListener(new RobotBProgramRunnerListener(communication, bProgram));
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {

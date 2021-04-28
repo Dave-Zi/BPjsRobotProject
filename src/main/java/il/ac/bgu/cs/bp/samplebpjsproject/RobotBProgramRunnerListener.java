@@ -22,17 +22,17 @@ import java.util.stream.Stream;
 
 public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
-    private RobotSensorsData robotData = new RobotSensorsData();
-    private ICommunication com;
-    private ICommand subscribe = this::subscribe;
-    private ICommand unsubscribe = this::unsubscribe;
-    private ICommand build = this::build;
-    private ICommand drive = this::drive;
-    private ICommand rotate = this::rotate;
-    private ICommand setSensor = this::setSensor;
-    private ICommand myAlgorithm = this::myAlgorithm;
-    private ICommand test = this::test;
-    private Map<String, ICommand> commandToMethod = Stream.of(new Object[][]{
+    private final RobotSensorsData robotData = new RobotSensorsData();
+    private final ICommunication com;
+    private final ICommand subscribe = this::subscribe;
+    private final ICommand unsubscribe = this::unsubscribe;
+    private final ICommand build = this::build;
+    private final ICommand drive = this::drive;
+    private final ICommand rotate = this::rotate;
+    private final ICommand setSensor = this::setSensor;
+    private final ICommand myAlgorithm = this::myAlgorithm;
+    private final ICommand test = this::test;
+    private final Map<String, ICommand> commandToMethod = Stream.of(new Object[][]{
             {"Subscribe", subscribe},
             {"Unsubscribe", unsubscribe},
             {"Build", build},
