@@ -17,6 +17,7 @@ import il.ac.bgu.cs.bp.bpjs.model.SafetyViolationTag;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,8 +44,10 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             {"Test", test}
     }).collect(Collectors.toMap(data -> (String) data[0], data -> (ICommand) data[1]));
 
-    RobotBProgramRunnerListener(ICommunication communication, BProgram bp) throws IOException {
+    RobotBProgramRunnerListener(ICommunication communication, BProgram bp) throws IOException, TimeoutException {
         com = communication;
+        // com.setCredentials("10.0.0.12", "pi", "pi");
+        com.connect();
         com.purgeQueue(QueueNameEnum.Commands);
         com.purgeQueue(QueueNameEnum.SOS);
         com.purgeQueue(QueueNameEnum.Data);
@@ -54,7 +57,6 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         com.consumeFromQueue(QueueNameEnum.Free, (consumerTag, delivery) ->
                 bp.enqueueExternalEvent(new BEvent("GetAlgorithmResult", new String(delivery.getBody(), StandardCharsets.UTF_8))));
 
-//        com.setCredentials("10.0.0.12", "pi", "pi");
     }
 
     @Override
