@@ -1,7 +1,3 @@
-var updateEventSet = bp.EventSet("Get Update", function (e) {
-    return (e.data == null) ? false : e.data.boards.Robot;
-});
-
 var allEventsButBuildEventSet = bp.EventSet("Block all for build", function (e) {
     return !e.name.equals("Build");
 });
@@ -29,6 +25,18 @@ bp.registerBThread("Do Something with Data", function () {
     }
 });
 
+bp.registerBThread("Just Right", function () {
+    bp.sync({request: bp.Event("Subscribe", {"EV3": ["2"]})});
+
+    while (true) {
+        var e = bp.sync({waitFor: dataEventSet});
+        var data = JSON.parse(e.data);
+        var distance  = data.EV3._1._2;
+        if (distance > 15 && distance < 20){
+            bp.sync({request: bp.Event("Rotate", {"EV3": {"B": 60, "C": 60, "speed": 15}})});
+        }
+    }
+});
 
 bp.registerBThread("Too Far Right", function () {
     bp.sync({request: bp.Event("Subscribe", {"EV3": ["2"]})});
@@ -38,7 +46,7 @@ bp.registerBThread("Too Far Right", function () {
         var data = JSON.parse(e.data);
         var distance  = data.EV3._1._2;
         if (distance > 20){
-            bp.sync({request: bp.Event("Drive", {"EV3": {"B": 15, "C": 18 }})});
+            bp.sync({request: bp.Event("Rotate", {"EV3": {"B": 30, "C": 60, "speed": 15}})});
         }
     }
 });
@@ -51,7 +59,7 @@ bp.registerBThread("Too Far Left", function () {
         var data = JSON.parse(e.data);
         var distance  = data.EV3._1._2;
         if (distance < 15){
-            bp.sync({request: bp.Event("Drive", {"EV3": {"B": 18, "C": 15 }})});
+            bp.sync({request: bp.Event("Rotate", {"EV3": {"B": 60, "C": 30, "speed": 15}})});
         }
     }
 });
