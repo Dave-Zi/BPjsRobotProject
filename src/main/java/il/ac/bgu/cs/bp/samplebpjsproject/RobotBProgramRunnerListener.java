@@ -30,7 +30,8 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     private final ICommand build = this::build;
     private final ICommand drive = this::drive;
     private final ICommand rotate = this::rotate;
-    private final ICommand setSensor = this::setSensor;
+    private final ICommand setSensorMode = this::setSensorMode;
+    private final ICommand setActuatorData = this::setActuatorData;
     private final ICommand myAlgorithm = this::myAlgorithm;
     private final ICommand test = this::test;
     private final Map<String, ICommand> commandToMethod = Stream.of(new Object[][]{
@@ -39,7 +40,8 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
             {"Build", build},
             {"Drive", drive},
             {"Rotate", rotate},
-            {"SetSensor", setSensor},
+            {"SetSensorMode", setSensorMode},
+            {"SetActuatorData", setActuatorData},
             {"MyAlgorithm", myAlgorithm},
             {"Test", test}
     }).collect(Collectors.toMap(data -> (String) data[0], data -> (ICommand) data[1]));
@@ -159,8 +161,13 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         send(message, QueueNameEnum.Commands);
     }
 
-    private void setSensor(BProgram bp, BEvent theEvent) {
-        String message = eventDataToJson(theEvent, "SetSensor");
+    private void setSensorMode(BProgram bp, BEvent theEvent) {
+        String message = eventDataToJson(theEvent, "SetSensorMode");
+        send(message, QueueNameEnum.SOS);
+    }
+
+    private void setActuatorData(BProgram bp, BEvent theEvent) {
+        String message = eventDataToJson(theEvent, "SetActuatorData");
         send(message, QueueNameEnum.SOS);
     }
 
