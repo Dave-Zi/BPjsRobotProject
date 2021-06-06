@@ -115,7 +115,11 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
     private String eventDataToJson(BEvent theEvent, String command) {
         String jsonString = parseObjectToJsonString(theEvent.maybeData);
         if (command.equals("Build")){
-            robotData.buildNicknameMaps(jsonString);
+            try {
+                robotData.buildNicknameMaps(jsonString);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
             jsonString = cleanNicknames(jsonString);
         }
         JsonElement jsonElement = new JsonParser().parse(jsonString);
