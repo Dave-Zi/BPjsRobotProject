@@ -3,8 +3,10 @@ package il.ac.bgu.cs.bp.samplebpjsproject;
 import Communication.ICommunication;
 import Communication.QueueNameEnum;
 import RobotData.RobotSensorsData;
-import com.google.gson.*;
-import com.google.gson.internal.LinkedTreeMap;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.rabbitmq.client.AlreadyClosedException;
 import il.ac.bgu.cs.bp.bpjs.execution.listeners.BProgramRunnerListener;
 import il.ac.bgu.cs.bp.bpjs.model.BEvent;
@@ -14,8 +16,6 @@ import il.ac.bgu.cs.bp.bpjs.model.SafetyViolationTag;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -114,26 +114,6 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     private String eventDataToJson(BEvent theEvent, String command) {
         String jsonString = parseObjectToJsonString(theEvent.maybeData);
-        switch (command){
-            case "Build":
-                try {
-                    robotData.buildNicknameMaps(jsonString);
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
-                jsonString = cleanNicknames(jsonString);
-                break;
-
-            case "SetSensorMode":
-            case "SetActuatorData":
-            case "Drive":
-            case "Rotate":
-            case "Subscribe":
-            case "Unsubscribe":
-                jsonString = robotData.replaceNicksInJson(jsonString);
-                break;
-        }
-
         JsonElement jsonElement = new JsonParser().parse(jsonString);
 
         JsonObject jsonObject = new JsonObject();
@@ -202,36 +182,6 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (AlreadyClosedException ignore) { }
-    }
-
-    private String cleanNicknames(String jsonString){
-        Gson gson = new Gson();
-        Map<?, ?> element = gson.fromJson(jsonString, Map.class); // json String to Map
-        for (Object boardNameKey : element.keySet()) { // Iterate over board types
-            @SuppressWarnings("unchecked")
-            ArrayList<Map<String, ?>> boardsDataList =
-                    (ArrayList<Map<String, ?>>) element.get(boardNameKey);
-
-            for (int i = 0; i < boardsDataList.size(); i++) {
-                Map<String, ?> portDataMap = boardsDataList.get(i);
-                portDataMap.remove("Name");
-                Map<String, String> newPortsValues = new HashMap<>();
-                for (Map.Entry<String, ?> ports : portDataMap.entrySet()) {
-                    if (ports.getValue() instanceof LinkedTreeMap) { // Check if port value is actually a map with nickname
-                        @SuppressWarnings("unchecked")
-                        Map<String, String> valueMap = (Map<String, String>) ports.getValue();
-                        if (valueMap.containsKey("Device")) {
-                            String nickname = valueMap.get("Device");
-                            newPortsValues.put(ports.getKey(), nickname);
-                        }
-                    } else {
-                        newPortsValues.put(ports.getKey(), (String) ports.getValue());
-                    }
-                }
-                boardsDataList.set(i, newPortsValues);
-            }
-        }
-        return new GsonBuilder().create().toJson(element);
     }
 
     /**
