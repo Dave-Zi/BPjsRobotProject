@@ -124,8 +124,11 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
                 jsonString = cleanNicknames(jsonString);
                 break;
 
+            case "SetSensorMode":
+            case "SetActuatorData":
+            case "Drive":
+            case "Rotate":
             case "Subscribe":
-
             case "Unsubscribe":
                 jsonString = robotData.replaceNicksInJson(jsonString);
                 break;
