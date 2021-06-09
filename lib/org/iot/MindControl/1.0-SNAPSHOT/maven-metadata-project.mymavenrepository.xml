@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata modelVersion="1.1.0">
+  <groupId>org.iot</groupId>
+  <artifactId>MindControl</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <versioning>
+    <snapshot>
+      <timestamp>20210428.183451</timestamp>
+      <buildNumber>11</buildNumber>
+    </snapshot>
+    <lastUpdated>20210428183451</lastUpdated>
+    <snapshotVersions>
+      <snapshotVersion>
+        <extension>jar</extension>
+        <value>1.0-20210428.183451-11</value>
+        <updated>20210428183451</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>1.0-20210428.183451-11</value>
+        <updated>20210428183451</updated>
+      </snapshotVersion>
+    </snapshotVersions>
+  </versioning>
+</metadata>
