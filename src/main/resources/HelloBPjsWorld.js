@@ -71,7 +71,6 @@ bp.registerBThread("Do My Algorithm", function () {
     bp.sync({request: bp.Event("Test", data)});
 });
 
-
 // bp.registerBThread("Align to Left Wall", function () {
 //     bp.sync({request: bp.Event("Subscribe", {"EV3": ["2"]})});
 //     var speedOffset = 0;
