@@ -26,6 +26,9 @@ public class HelloWorld {
         // Print program events to the console
 //        rnr.addListener( new PrintBProgramRunnerListener() );
         ICommunication communication = new CommunicationHandler();
+        if (args.length == 3){
+            communication.setCredentials(args[0], args[1], args[2]);
+        }
         rnr.addListener(new RobotBProgramRunnerListener(communication, bProgram));
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
