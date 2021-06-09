@@ -48,7 +48,6 @@ public class RobotBProgramRunnerListener implements BProgramRunnerListener {
 
     RobotBProgramRunnerListener(ICommunication communication, BProgram bp) throws IOException, TimeoutException {
         com = communication;
-        // com.setCredentials("10.0.0.12", "pi", "pi");
         com.connect();
         com.purgeQueue(QueueNameEnum.Commands);
         com.purgeQueue(QueueNameEnum.SOS);
