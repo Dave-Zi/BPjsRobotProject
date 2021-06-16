@@ -29,7 +29,7 @@ bp.registerBThread("Stop", function () {
         var data = JSON.parse(e.data);
         var distance = data.EV3.My_Ev3.UV_Sensor;
         if (distance < 30){
-            bp.sync({request: bp.Event("Drive", {"EV3": {"B": 10, "C": -10}})});
+            bp.sync({request: bp.Event("Drive", {"EV3": {"B": 6, "C": -6}})});
         }
     }
 });
