@@ -19,7 +19,7 @@
     <repositories>
         <repository>
             <id>myMavenRepo</id>
-            <url>https://mymavenrepo.com/repo/hMt8ClBV8kQ64QtGXSYF/</url>
+            <url>file://${project.basedir}/lib</url>
         </repository>
     </repositories>
 
